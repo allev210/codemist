@@ -128,3 +128,30 @@ Usage:
 Token can also be set via environment variable:
     export MIST_TOKEN="eyJhbGci..."
     python3 mist_wan_edges.py
+
+****Mist Unassigned Port Monitor ****
+----------------------------------------
+----------------------------------------
+
+Unzip the Unassigned_port.tar.GZ and run the node.js script.
+
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Every CHECK_INTERVAL_MINUTES the script:
+ *   1. Lists all sites in the org
+ *   2. Per site → fetches switch port stats (site_ports, up=true)
+ *   3. Identifies ports with NO explicit profile/port_usage assignment
+ *      (compares against each device's port_config in the site device config)
+ *   4. Queries Insights (SW_PORT_UP device events) scoped to the site
+ *      for the last windowMins to confirm the port came up in this window
+ *   5. Sends an HTML alert email for any matching ports
+ *
+ * Requirements:
+ *   npm install nodemailer dotenv
+ *   Node 18+ has built-in fetch — or:  npm install node-fetch
+ *
+ * Setup:
+ *   cp .env.example .env   ← fill in values
+ *   node mist-unassigned-port-monitor.js
+ */
+
+
