@@ -110,3 +110,21 @@ Usage
 Requirements
 ------------
     pip install requests
+
+mist_wan_edges.py
+-----------------
+Lists all WAN edge (gateway) devices in a Mist org with:
+  - Device identity  (name, model, serial, MAC, site)
+  - Connection state (status, IP, firmware, uptime)
+  - Last config push (event type, timestamp, result text, warnings/errors)
+
+Usage:
+    python3 mist_wan_edges.py
+    python3 mist_wan_edges.py --org ORG_ID --token TOKEN
+    python3 mist_wan_edges.py --eu           # EU region
+    python3 mist_wan_edges.py --json         # machine-readable JSON output
+    python3 mist_wan_edges.py --days 60      # extend event look-back (default 90d)
+
+Token can also be set via environment variable:
+    export MIST_TOKEN="eyJhbGci..."
+    python3 mist_wan_edges.py
