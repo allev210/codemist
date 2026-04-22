@@ -154,4 +154,119 @@ Unzip the Unassigned_port.tar.GZ and run the node.js script.
  *   node mist-unassigned-port-monitor.js
  */
 
+# Mist → TopDesk Middleware
 
+Draft/concept - not fully validated.
+
+Receives Mist Marvis Action webhook events and opens TopDesk incidents automatically.
+
+## Architecture
+
+```
+Mist Cloud
+  │  POST /webhook/mist
+  ▼
+Express server  (server.js)
+  │  verify signature, filter severity
+  ▼
+Mapper          (mapper.js)
+  │  translate Marvis payload → TopDesk incident body
+  ▼
+TopDesk client  (topdesk.js)
+  │  POST /tas/api/incidents
+  ▼
+TopDesk
+```
+
+## Quick start
+
+### 1. Install
+
+```bash
+npm install
+cp .env.example .env
+# Edit .env with your credentials
+```
+
+### 2. Configure
+
+| Variable | Description |
+|----------|-------------|
+| `TOPDESK_URL` | Full URL of your TopDesk instance |
+| `TOPDESK_USERNAME` | TopDesk login username |
+| `TOPDESK_APP_PASSWORD` | Application password (see below) |
+| `TOPDESK_OPERATOR_GROUP_ID` | (Optional) Pre-assign tickets to a group |
+| `MIST_WEBHOOK_SECRET` | Shared secret for HMAC verification |
+| `MIN_SEVERITY` | `info` / `warn` / `critical` (default: `warn`) |
+
+**Creating a TopDesk application password:**
+Profile → Settings → Application passwords → New application password
+
+**Finding operator group IDs:**
+```bash
+curl -u user:apppassword https://yourcompany.topdesk.net/tas/api/operatorgroups
+```
+
+### 3. Run
+
+```bash
+# Development (auto-restart on file change, Node 18+)
+npm run dev
+
+# Production
+npm start
+```
+
+### 4. Configure Mist webhook
+
+In Mist: **Organization → Webhooks → New webhook**
+
+| Field | Value |
+|-------|-------|
+| URL | `https://your-server.example.com/webhook/mist` |
+| Topics | `alarms` |
+| Secret | Same value as `MIST_WEBHOOK_SECRET` |
+
+### 5. Deploy with Docker
+
+```bash
+docker build -t mist-topdesk .
+docker run -d \
+  --env-file .env \
+  -p 3000:3000 \
+  --name mist-topdesk \
+  mist-topdesk
+```
+
+## Supported Marvis symptom types
+
+| Mist symptom | TopDesk subcategory | Priority |
+|---|---|---|
+| `dhcp_failure` | DHCP | P2 |
+| `dns_failure` | DNS | P2 |
+| `auth_failure` | Authentication | P2 |
+| `bad_cable` | Wired | P3 |
+| `port_flap` | Switch | P3 |
+| `port_stuck` | Switch | P2 |
+| `missing_vlan` | Switch | P2 |
+| `switch_offline` | Switch | P1 |
+| `gateway_down` | Gateway/WAN | P1 |
+| `bad_wan_uplink` | Gateway/WAN | P1 |
+| `vpn_path_down` | VPN | P2 |
+| `stp_loop` | Switch | P1 |
+| `ap_offline` | Wireless | P2 |
+
+Unknown symptom types fall back to `Network / Infrastructure / P2`.
+
+## Running tests
+
+```bash
+node --test tests/
+```
+
+## Health check
+
+```
+GET /health
+→ { "status": "ok", "timestamp": "2026-04-16T10:00:00.000Z" }
+```
